@@ -887,8 +887,8 @@ print(f"RMSE: {rmse:.4f}")
 # %% editable=true slideshow={"slide_type": ""} tags=["ex"]
 def assess_regression_model(model, X_train, X_test, y_train, y_test) -> tuple[float, float]:
     # predict for train and test
-    test_pred = reg_linear.predict(X_test)
-    train_pred = reg_linear.predict(X_train)
+    test_pred = model.predict(X_test)
+    train_pred = model.predict(X_train)
     
     # exponential transform for y_train, y_test and predictions
     y_train = np.expm1(y_train)
@@ -898,10 +898,10 @@ def assess_regression_model(model, X_train, X_test, y_train, y_test) -> tuple[fl
 
     # calculate train and test RMSE
     test_rmse = root_mean_squared_error(y_test,test_pred)
-
-    # print train and test RMSE
     train_rmse = root_mean_squared_error(y_train,train_pred)
-
+    
+    # print train and test RMSE
+    print(f'Train RMSE: {train_rmse:.2f}\nTest RMSE: {test_rmse:.2f}')
 
     return (train_rmse,test_rmse)
 
@@ -915,16 +915,12 @@ assert 16000 < rmse_train < 17000
 assert 21000 < rmse_test < 22000
 
 print("Solution is correct!")
-print((rmse_train,rmse_test))
 
 
 # %% [markdown] editable=true slideshow={"slide_type": ""} tags=["ex"]
 # // skomentuj tutaj
 #
-# rmse_train = 16750.891626496326
-# rmse_test = 21480.786830548528
-#
-# Raczej nie następuje przeuczenie modelu. Błąd na danych treningowych jest mniejszy niż testowych, aczkolwiek nie jest to wielka różnica patrząc na rozkład zmiennej docelowej.
+# Możliwe że następuje przeuczenie modelu. Błąd na danych treningowych jest mniejszy niż testowych.
 #
 # Sam błąd nie jest duży, ale mógłby być dużo mniejszy - zmienna docelowa jest rzędu setek tysięcy, a jej odchylenie standardowe to około 78000
 
@@ -1068,7 +1064,24 @@ print()
 # Przetestuj modele z użyciem `assess_regression_model()`. Skomentuj wyniki. Czy udało się wyeliminować overfitting?
 
 # %% editable=true slideshow={"slide_type": ""} tags=["ex"]
-# your_code
+from sklearn.linear_model import RidgeCV, LassoCV
+
+ridgecv = RidgeCV(alphas=np.linspace(0.1,100, num=1000)) # LOOCV by default
+lassocv = LassoCV(n_alphas=1000, cv=5, random_state=0)
+
+ridgecv.fit(X_train, y_train)
+lassocv.fit(X_train, y_train)
+
+print("RidgeCV:")
+ridge_train_rmse, ridge_test_rmse = assess_regression_model(ridgecv, X_train, X_test, y_train, y_test)
+print("LassoCV:")
+lasso_train_rmse, lasso_test_rmse = assess_regression_model(lassocv, X_train, X_test, y_train, y_test)
+print()
+
+reg_ridge_alpha = ridgecv.alpha_
+reg_lasso_alpha = lassocv.alpha_
+
+print(f'RidgeCV alpha: {reg_ridge_alpha:.4f}\nLassoCV alpha: {reg_lasso_alpha:.4f}')
 
 
 # %% editable=true slideshow={"slide_type": ""} tags=["ex"]
@@ -1084,9 +1097,9 @@ assert 0 < reg_lasso_alpha < 0.1
 print("Solution is correct!")
 
 # %% [markdown] editable=true slideshow={"slide_type": ""} tags=["ex"]
-# // skomentuj tutaj
+# W przypadku RidgeCV treningowy RMSE dalej jest mniejszy niż testowy, aczkolwiek różnica się w dużym stopniu zmniejszyła. Możliwe, że dalej występuje overfitting
 #
-#
+# W przypadku LassoCV oba RMSE znacząco zbliżyły się do siebie. Możliwe, że overfitting został prawie wyeliminowany.
 
 # %% [markdown] editable=true slideshow={"slide_type": ""}
 # ## Regresja wielomianowa
